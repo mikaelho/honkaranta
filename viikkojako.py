@@ -71,6 +71,8 @@ print(r)
             sunday = f'{self.year}-W{week:02}-7'
             date_monday = datetime.strptime(monday, '%G-W%V-%u')
             date_sunday = datetime.strptime(sunday, '%G-W%V-%u')
+            if name == cleaning_name:
+                name = f'*{name}*'
             weeks += (f'| {week:02} | '
                 f'{date_monday.strftime("%d.%m")} - '
                 f'{date_sunday.strftime("%d.%m")} | '
@@ -79,7 +81,7 @@ print(r)
             f'{self.year}\n'
             f'====\n\n'
             f'| Vk | Pvm           | Haltija    |\n'
-            f'|:--:|:-------------:| ---------- |\n'
+            f'|:--:|:-------------:|:----------:|\n'
             f'{weeks}'
         )
         
