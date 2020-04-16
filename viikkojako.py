@@ -73,15 +73,15 @@ print(r)
             date_sunday = datetime.strptime(sunday, '%G-W%V-%u')
             if name == cleaning_name:
                 name = f'*{name}*'
-            weeks += (f'| {week:02} | '
+            weeks += (f'|**{week:02}**| '
                 f'{date_monday.strftime("%d.%m")} - '
                 f'{date_sunday.strftime("%d.%m")} | '
                 f'{name:10} |\n')
         return (
             f'{self.year}\n'
             f'====\n\n'
-            f'| Vk | Pvm           | Haltija    |\n'
-            f'|:--:|:-------------:|:----------:|\n'
+            f'|  Vk  | Pvm           | Haltija    |\n'
+            f'|:----:|:-------------:|:----------:|\n'
             f'{weeks}'
         )
         
