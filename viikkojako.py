@@ -78,6 +78,7 @@ print(r)
         return (
             f'{self.year}\n'
             f'====\n\n'
+            f'| Vk | Pvm           | Haltija    |\n'
             f'|:--:|:-------------:| ---------- |\n'
             f'{weeks}'
         )
