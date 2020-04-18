@@ -1,19 +1,15 @@
 import collections
 from datetime import date, datetime
 import dateutil.easter
+import ics
 from dateutil.relativedelta import relativedelta, SA as Saturday
 import itertools
 import json
 import pathlib
 import random
 
-'''
-| Tables        | Are           | Cool  |
-| ------------- |:-------------:| -----:|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
-'''
+year_to_generate_for = 2020
+midsummer_name = None
 
 names = ['Alfa', 'Beta', 'Gamma', 'Delta', 'Epsilon']
 
@@ -26,6 +22,9 @@ class Year(dict):
     
     def __init__(self, year_number, midsummer_name):
         self.year = year_number
+
+        if midsummer_name is None:
+            midsummer_name = random.choice(names)
         self[self.midsummer_week] = midsummer_name
         
         backward = Rotator(midsummer_name, backward=True)
@@ -67,10 +66,7 @@ print(r)
         '''
         weeks = ''
         for week, name in sorted(self.items()):
-            monday = f'{self.year}-W{week:02}-1'
-            sunday = f'{self.year}-W{week:02}-7'
-            date_monday = datetime.strptime(monday, '%G-W%V-%u')
-            date_sunday = datetime.strptime(sunday, '%G-W%V-%u')
+            date_monday, date_sunday = self.start_and_end_for_week(week)
             if name == cleaning_name:
                 name = f'*{name}*'
             weeks += (f'|**{week:02}**| '
@@ -84,7 +80,23 @@ print(r)
             f'|:----:|:-------------:|:----------:|\n'
             f'{weeks}'
         )
-        
+
+    def create_icalendar(self):
+        calendar = ics.Calendar()
+        for week in sorted(self.keys()):
+            name = self[week]
+            monday, sunday = self.start_and_end_for_week(week)
+            event = ics.Event(name=f'Honkaranta: {name}', begin=monday, duration={'days':7})
+            calendar.events.add(event)
+        return calendar
+
+    def start_and_end_for_week(self, week):
+        monday = f'{self.year}-W{week:02}-1'
+        sunday = f'{self.year}-W{week:02}-7'
+        date_monday = datetime.strptime(monday, '%G-W%V-%u')
+        date_sunday = datetime.strptime(sunday, '%G-W%V-%u')
+        return date_monday, date_sunday
+
     @property
     def weeks(self):
         return week_from_date(date(self.year, 12, 31))
@@ -138,7 +150,7 @@ if years_file.exists():
 else:
     years = []
     
-def distribute_weeks(years):
+def distribute_weeks(year_number, midsummer_name):
     """
     >>> years = []
     >>> for _ in range(5): distribute_weeks(years)
@@ -166,19 +178,7 @@ def distribute_weeks(years):
         [value == 50/len(names) for value in checker.values()]), 'Mismatch in week count'
         
     years.append(year)
-    
-def get_year(years):
-    """
-    >>> get_year([])
-    2020
-    >>> test_years = [ns(year=2021), ns(year=2022)]
-    >>> get_year(test_years)
-    2023
-    """
-    if len(years):
-        return years[-1].year + 1
-    else:
-        return date.today().year
+
 
 def get_midsummer_name(year):
     return year.weeks[midsummer_week(year.year)]
@@ -186,23 +186,16 @@ def get_midsummer_name(year):
 def week_from_date(date):
     _, week, _ = date.isocalendar()
     return week
-    
-def get_candidates(names_listed):
-    """
-    >>> midsummer_names = ['Beta', 'Gamma', 'Delta', 'Epsilon']
-    >>> get_candidates(midsummer_names)
-    ['Alfa']
-    """
-    counts = collections.Counter(names + names_listed)
-    min_count = min(counts.values())
-    return [ name 
-        for (name, count) in counts.items() 
-        if count == min_count ]
 
-for i in range(2):
-    distribute_weeks(years)
-    print(years[i])
-    print()
+year = Year(year_to_generate_for, midsummer_name)
 
-with open('2020.md', 'w') as fp:
-    fp.write(str(years[0]))
+with open(f'../{year_to_generate_for}.md', 'w') as fp:
+    fp.write(str(year))
+
+calendar = year.create_icalendar()
+
+with open(f'../honkaranta.ics', 'a+') as  fp:
+    fp.write(str(calendar))
+
+print(f'Saved {year_to_generate_for}')
+print(str(calendar))
