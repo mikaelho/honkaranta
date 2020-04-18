@@ -57,15 +57,6 @@ class Year(dict):
                 self[week_number] = forward.next()
         
     def __str__(self):
-        '''
-        weeks = '\n'.join(
-            map(lambda w: f'{w[0]:02} - {w[1]}', 
-                sorted(self.items())))
-                
-        d = "2013-W26"
-r = datetime.datetime.strptime(d + '-1', "%Y-W%W-%w")
-print(r)
-        '''
         weeks = ''
         for week, name in sorted(self.items()):
             date_monday, date_sunday = self.start_and_end_for_week(week)
@@ -88,7 +79,7 @@ print(r)
         for week in sorted(self.keys()):
             name = self[week]
             monday, sunday = self.start_and_end_for_week(week)
-            event = ics.Event(name=f'Honkaranta: {name}', begin=monday, duration={'days':7})
+            event = ics.Event(name=f'Honkaranta: {name}', begin=monday, duration={'days':6, 'hours':14})
             event.make_all_day()
             calendar.events.add(event)
         return calendar
@@ -98,8 +89,6 @@ print(r)
         sunday = f'{self.year}-W{week:02}-7'
         date_monday = datetime.strptime(monday, '%G-W%V-%u')
         date_sunday = datetime.strptime(sunday, '%G-W%V-%u')
-        #date_monday = arrow.get(date_monday, tz.gettz('EET'))
-        #date_sunday = arrow.get(date_sunday, tz.gettz('EET'))
         return date_monday, date_sunday
 
     @property
@@ -198,9 +187,10 @@ with open(f'../{year_to_generate_for}.md', 'w') as fp:
     fp.write(str(year))
 
 calendar = year.create_icalendar()
+icalendar_str = str(calendar).replace('BEGIN:VEVENT', 'X-WR-TIMEZONE:EET\nBEGIN:VEVENT', 1)
 
 with open(f'../honkaranta.ics', 'w') as  fp:
-    fp.write(str(calendar))
+    fp.write(icalendar_str)
 
 print(f'Saved {year_to_generate_for}')
-print(str(calendar))
+print(icalendar_str)
