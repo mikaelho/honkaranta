@@ -98,8 +98,8 @@ print(r)
         sunday = f'{self.year}-W{week:02}-7'
         date_monday = datetime.strptime(monday, '%G-W%V-%u')
         date_sunday = datetime.strptime(sunday, '%G-W%V-%u')
-        date_monday = arrow.get(date_monday, tz.gettz('EET'))
-        date_sunday = arrow.get(date_sunday, tz.gettz('EET'))
+        #date_monday = arrow.get(date_monday, tz.gettz('EET'))
+        #date_sunday = arrow.get(date_sunday, tz.gettz('EET'))
         return date_monday, date_sunday
 
     @property
