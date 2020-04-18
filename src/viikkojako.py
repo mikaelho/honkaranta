@@ -89,6 +89,7 @@ print(r)
             name = self[week]
             monday, sunday = self.start_and_end_for_week(week)
             event = ics.Event(name=f'Honkaranta: {name}', begin=monday, duration={'days':7})
+            event.make_all_day()
             calendar.events.add(event)
         return calendar
 
@@ -198,7 +199,7 @@ with open(f'../{year_to_generate_for}.md', 'w') as fp:
 
 calendar = year.create_icalendar()
 
-with open(f'../honkaranta.ics', 'a+') as  fp:
+with open(f'../honkaranta.ics', 'w') as  fp:
     fp.write(str(calendar))
 
 print(f'Saved {year_to_generate_for}')
