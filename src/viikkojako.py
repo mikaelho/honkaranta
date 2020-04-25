@@ -200,7 +200,7 @@ for year in (year1, year2):
         fp.write(str(year))
 
 calendar = year1.create_icalendar()
-#calendar = year2.create_icalendar(calendar)
+calendar = year2.create_icalendar(calendar)
 
 icalendar_str = str(calendar).replace(
     'BEGIN:VEVENT',
