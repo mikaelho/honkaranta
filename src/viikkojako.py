@@ -1,61 +1,86 @@
+"""
+Jakaa kesäviikot nimien kesken tasavälein
+niin että juhannus kiertää tasaisesti.
+
+Tuottaa (ylikirjoittaa) 
+vuosikalenteritiedostot (.md) kuluvalle ja 
+seuraavalle vuodelle. Tuottaa yhden 
+nettikalenteritiedoston (.ics) jossa kuluva 
+ja seuraava vuosi.
+
+Jos "juhannusnimeä" ei ole asetettu, arpoo
+nimen kuluvan vuoden juhannukselle.
+
+Asenna tarvittavat:
+    pip install -r requirements.txt
+    
+Testattu Python 3.6-3.8.
+"""
+
 import collections
 from datetime import date, datetime
-import dateutil.easter
-import ics
-import arrow
-from dateutil import tz
-from dateutil.relativedelta import relativedelta, SA as Saturday
 import itertools
-import json
-import pathlib
 import random
 
+import arrow
+import dateutil.easter
+from dateutil import tz
+from dateutil.relativedelta import relativedelta, SA as Saturday
+import ics
+
+# ---------------------------------------
+
 year_to_generate_for = 2020
-midsummer_name = None
 
 names = ['Alfa', 'Beta', 'Gamma', 'Delta', 'Epsilon']
+midsummer_name = 'Alfa'
+midsummer_name_year = 2018
+
+first_week = 17
+last_week = 41
 
 spring_cleaning = 16
 autumn_cleaning = 42
 
 cleaning_name = 'TALKOOT'
 
+# ---------------------------------------
+
+weeks_in_total = last_week - first_week + 1
+assert weeks_in_total == 25
+weeks_per_name = weeks_in_total / len(names)
+assert weeks_per_name == 5
+
+
 class Year(dict):
-    
     def __init__(self, year_number, midsummer_name):
         self.year = year_number
 
-        if midsummer_name is None:
-            midsummer_name = random.choice(names)
         self[self.midsummer_week] = midsummer_name
-        
+
         backward = Rotator(midsummer_name, backward=True)
-        for week_number in range(self.midsummer_week-1, 0, -1):
-            if (
-                (
-                    week_number == spring_cleaning and
-                    week_number != self.easter_week
-                ) or (
-                    (week_number + 1) == spring_cleaning and
-                    (week_number + 1) == self.easter_week
-                )
-            ):
-                self[week_number] = cleaning_name
-            else:
-                self[week_number] = backward.next()
-                
+        self.update({
+            week_number: backward.next()
+            for week_number in range(self.midsummer_week - 1, first_week - 1,
+                                     -1)
+        })
+
         forward = Rotator(midsummer_name)
-        for week_number in range(self.midsummer_week+1, self.weeks+1):
-            if (
-                (
-                    week_number == autumn_cleaning
-                ) or (
-                    self.weeks == 53 and
-                    week_number - 1 == autumn_cleaning)):
-                self[week_number] = cleaning_name
-            else:
-                self[week_number] = forward.next()
-        
+        self.update({
+            week_number: forward.next()
+            for week_number in range(self.midsummer_week + 1, last_week + 1)
+        })
+
+        counter = collections.Counter(self.values())
+        assert all([count == weeks_per_name for count in counter.values()])
+
+        spring_clean = (spring_cleaning if spring_cleaning != self.easter_week
+                        else spring_cleaning - 1)
+        self[spring_clean] = cleaning_name
+        self[autumn_cleaning] = cleaning_name
+
+        assert len(self) == weeks_in_total + 2
+
     def __str__(self):
         weeks = ''
         for week, name in sorted(self.items()):
@@ -63,25 +88,30 @@ class Year(dict):
             if name == cleaning_name:
                 name = f'*{name}*'
             weeks += (f'|**{week:02}**| '
-                f'{date_monday.strftime("%d.%m")} - '
-                f'{date_sunday.strftime("%d.%m")} | '
-                f'{name:10} |\n')
-        return (
-            f'{self.year}\n'
-            f'====\n\n'
-            f'|  Vk  | Pvm           | Haltija    |\n'
-            f'|:----:|:-------------:|:----------:|\n'
-            f'{weeks}'
-        )
+                      f'{date_monday.strftime("%d.%m")} - '
+                      f'{date_sunday.strftime("%d.%m")} | '
+                      f'{name:10} |\n')
+        return (f'{self.year}\n'
+                f'====\n\n'
+                f'|  Vk  | Pvm           | Haltija    |\n'
+                f'|:----:|:-------------:|:----------:|\n'
+                f'{weeks}')
 
-    def create_icalendar(self):
-        calendar = ics.Calendar()
+    def create_icalendar(self, calendar=None):
+        calendar = calendar or ics.Calendar()
         for week in sorted(self.keys()):
             name = self[week]
             monday, sunday = self.start_and_end_for_week(week)
-            event = ics.Event(name=f'Honkaranta: {name}', begin=monday, duration={'days':6, 'hours':14})
+            event = ics.Event(
+                name=f'Honkaranta: {name}',
+                begin=monday,
+                duration={'days': 6,
+                          'hours': 14})
             event.make_all_day()
-            calendar.events.add(event)
+            if type(calendar.events) is list:
+                calendar.events.append(event)
+            else:
+                calendar.events.add(event)
         return calendar
 
     def start_and_end_for_week(self, week):
@@ -94,7 +124,7 @@ class Year(dict):
     @property
     def weeks(self):
         return week_from_date(date(self.year, 12, 31))
-        
+
     @property
     def easter_week(self):
         """ 
@@ -103,8 +133,8 @@ class Year(dict):
         >>> Year(2025).easter_week
         16
         """
-        return  week_from_date(dateutil.easter.easter(self.year))
-        
+        return week_from_date(dateutil.easter.easter(self.year))
+
     @property
     def midsummer_week(self):
         """ 
@@ -114,8 +144,7 @@ class Year(dict):
         25
         """
         return week_from_date(
-            date(self.year, 6, 20) + 
-            relativedelta(weekday=Saturday))
+            date(self.year, 6, 20) + relativedelta(weekday=Saturday))
 
     @property
     def midsummer_name(self):
@@ -123,7 +152,6 @@ class Year(dict):
 
 
 class Rotator:
-    
     def __init__(self, start_name, backward=False):
         if not backward:
             self.iter = itertools.cycle(names)
@@ -131,66 +159,56 @@ class Rotator:
             self.iter = itertools.cycle(reversed(names))
         while next(self.iter) != start_name:
             pass
-    
+
     def next(self):
         return next(self.iter)
+
+
+def get_midsummer_name(name):
+    global midsummer_name_year
+    if name is None:
+        name = random.choice(names)
+        rotator = Rotator(name)
         
-
-years_file = pathlib.Path('years.json')
-
-if years_file.exists():
-    with years_file.open() as fp:
-        years = json.load(fp)
-else:
-    years = []
-    
-def distribute_weeks(year_number, midsummer_name):
-    """
-    >>> years = []
-    >>> for _ in range(5): distribute_weeks(years)
-    >>> len(years)
-    5
-    >>> 52 <= len(years[0].weeks) <= 53
-    True
-    """
-    year_number = get_year(years)
-
-    if len(years):
-        last_year = years[-1]
-        last_name = last_year.midsummer_name
-        next_name = Rotator(last_name).next()
     else:
-        next_name = random.choice(names)
+        assert midsummer_name_year is not None, 'Aseta myös vuosi'
+        assert midsummer_name_year <= year_to_generate_for, 'Tarkista vuosi'
         
-    year = Year(year_number, next_name)
-    
-    checker = collections.Counter([
-        year[key]
-        for key in year
-        if year[key] != cleaning_name])
-    assert all(
-        [value == 50/len(names) for value in checker.values()]), 'Mismatch in week count'
-        
-    years.append(year)
-
-
-def get_midsummer_name(year):
-    return year.weeks[midsummer_week(year.year)]
+        rotator = Rotator(name)
+        while midsummer_name_year < year_to_generate_for:
+            name = rotator.next()
+            midsummer_name_year += 1
+    return name, rotator
 
 def week_from_date(date):
     _, week, _ = date.isocalendar()
     return week
 
-year = Year(year_to_generate_for, midsummer_name)
+# GENERATE
 
-with open(f'../{year_to_generate_for}.md', 'w') as fp:
-    fp.write(str(year))
+year_to_generate_for = date.today().year
+midsummer_name, rotator = get_midsummer_name(midsummer_name)
 
-calendar = year.create_icalendar()
-icalendar_str = str(calendar).replace('BEGIN:VEVENT', 'X-WR-TIMEZONE:EET\nBEGIN:VEVENT', 1)
+year1 = Year(year_to_generate_for, midsummer_name)
 
-with open(f'../honkaranta.ics', 'w') as  fp:
+midsummer_name = rotator.next()
+
+year2 = Year(year_to_generate_for + 1, midsummer_name)
+
+for year in (year1, year2):
+    with open(f'../{year.year}.md', 'w') as fp:
+        fp.write(str(year))
+
+calendar = year1.create_icalendar()
+#calendar = year2.create_icalendar(calendar)
+
+icalendar_str = str(calendar).replace(
+    'BEGIN:VEVENT',
+    'X-WR-TIMEZONE:EET\nBEGIN:VEVENT',
+    1)
+
+with open(f'../honkaranta.ics', 'w') as fp:
     fp.write(icalendar_str)
 
-print(f'Saved {year_to_generate_for}')
-print(icalendar_str)
+print('Valmis')
+
