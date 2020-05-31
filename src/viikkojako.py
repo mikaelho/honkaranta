@@ -32,9 +32,9 @@ import ics
 
 year_to_generate_for = 2020
 
-names = ['Alfa', 'Beta', 'Gamma', 'Delta', 'Epsilon']
-midsummer_name = 'Alfa'
-midsummer_name_year = 2018
+names = ['Tytti', 'Kari', 'Ripa', 'Timppa', 'Pera']
+midsummer_name = 'Tytti'
+midsummer_name_year = 2020
 
 first_week = 17
 last_week = 41
