@@ -30,17 +30,17 @@ import ics
 
 # ---------------------------------------
 
-year_to_generate_for = 2020
+year_to_generate_for = 2023
 
 names = ['Tytti', 'Kari', 'Ripa', 'Timppa', 'Pera']
-midsummer_name = 'Tytti'
-midsummer_name_year = 2020
+midsummer_name = 'Timppa'
+midsummer_name_year = 2023
 
-first_week = 17
-last_week = 41
+first_week = 16
+last_week = 40
 
-spring_cleaning = 16
-autumn_cleaning = 42
+spring_cleaning = 15
+autumn_cleaning = 41
 
 cleaning_name = 'TALKOOT'
 
@@ -127,22 +127,22 @@ class Year(dict):
 
     @property
     def easter_week(self):
-        """ 
-        >>> Year(2020).easter_week
-        15
-        >>> Year(2025).easter_week
-        16
-        """
+        # """
+        # >>> Year(2020).easter_week
+        # 15
+        # >>> Year(2025).easter_week
+        # 16
+        # """
         return week_from_date(dateutil.easter.easter(self.year))
 
     @property
     def midsummer_week(self):
-        """ 
-        >>> Year(2020).midsummer_week
-        25
-        >>> Year(2025).midsummer_week
-        25
-        """
+        # """
+        # >>> Year(2020).midsummer_week
+        # 25
+        # >>> Year(2025).midsummer_week
+        # 25
+        # """
         return week_from_date(
             date(self.year, 6, 20) + relativedelta(weekday=Saturday))
 
@@ -186,7 +186,7 @@ def week_from_date(date):
 
 # GENERATE
 
-year_to_generate_for = date.today().year
+# year_to_generate_for = date.today().year
 midsummer_name, rotator = get_midsummer_name(midsummer_name)
 
 year1 = Year(year_to_generate_for, midsummer_name)
