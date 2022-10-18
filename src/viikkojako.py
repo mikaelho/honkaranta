@@ -21,6 +21,7 @@ import collections
 from datetime import date, datetime
 import itertools
 import random
+from pathlib import Path
 
 import arrow
 import dateutil.easter
@@ -36,20 +37,20 @@ names = ['Tytti', 'Kari', 'Ripa', 'Timppa', 'Pera']
 midsummer_name = 'Timppa'
 midsummer_name_year = 2023
 
-first_week = 16
-last_week = 40
+first_week = 21
+last_week = 35
 
-spring_cleaning = 15
-autumn_cleaning = 41
+spring_cleaning = 20
+autumn_cleaning = 36
 
 cleaning_name = 'TALKOOT'
 
 # ---------------------------------------
 
 weeks_in_total = last_week - first_week + 1
-assert weeks_in_total == 25
+assert weeks_in_total == 15
 weeks_per_name = weeks_in_total / len(names)
-assert weeks_per_name == 5
+assert weeks_per_name == 3
 
 
 class Year(dict):
@@ -90,7 +91,7 @@ class Year(dict):
             weeks += (f'|**{week:02}**| '
                       f'{date_monday.strftime("%d.%m")} - '
                       f'{date_sunday.strftime("%d.%m")} | '
-                      f'{name:10} |\n')
+                      f'{"*JUHANNUS*<br/>" if week == self.midsummer_week else  ""}{name:10} |\n')
         return (f'{self.year}\n'
                 f'====\n\n'
                 f'|  Vk  | Pvm           | Haltija    |\n'
@@ -186,29 +187,24 @@ def week_from_date(date):
 
 # GENERATE
 
-# year_to_generate_for = date.today().year
 midsummer_name, rotator = get_midsummer_name(midsummer_name)
-
 year1 = Year(year_to_generate_for, midsummer_name)
-
 midsummer_name = rotator.next()
-
 year2 = Year(year_to_generate_for + 1, midsummer_name)
-
-for year in (year1, year2):
-    with open(f'../{year.year}.md', 'w') as fp:
-        fp.write(str(year))
 
 calendar = year1.create_icalendar()
 calendar = year2.create_icalendar(calendar)
 
-icalendar_str = str(calendar).replace(
+icalendar_str = calendar.serialize().replace(
     'BEGIN:VEVENT',
     'X-WR-TIMEZONE:EET\nBEGIN:VEVENT',
     1)
 
-with open(f'../honkaranta.ics', 'w') as fp:
-    fp.write(icalendar_str)
+Path("../honkaranta.ics").write_text(icalendar_str)
+
+for year in (year1, year2):
+    Path(f"../{year.year}.md").write_text(str(year))
+
 
 print('Valmis')
 
