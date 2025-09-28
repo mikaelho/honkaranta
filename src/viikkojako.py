@@ -39,10 +39,10 @@ midsummer_name = "Timppa"
 midsummer_name_year = 2023
 
 first_week = 21
-last_week = 35
+last_week = 40
 
 spring_cleaning = 20
-autumn_cleaning = 36
+autumn_cleaning = 41
 ready_for_winter = 42
 
 cleaning_name = "TALKOOT"
@@ -51,9 +51,9 @@ ready_for_winter_name = "TALVIKUNTOON"
 # ---------------------------------------
 
 weeks_in_total = last_week - first_week + 1
-assert weeks_in_total == 15
+assert weeks_in_total == 20
 weeks_per_name = weeks_in_total / len(names)
-assert weeks_per_name == 3
+assert weeks_per_name == 4
 
 
 class Year(dict):
